@@ -35,7 +35,22 @@ const scenarioColumn = [
     { label: 'Specialty Name', fieldName: 'Specialty_AV__r.Name',type:'text' },
     { label: 'ScenarioCondition', fieldName: 'ScenarioCondition',type:'text' },
     { label: 'Complication', fieldName: 'Complication',type:'text' },
-    { label: 'WorkHistory', fieldName: 'WorkHistory',type:'text' },
+    // { label: 'WorkHistory', fieldName: 'WorkHistory',type:'text' },
+    {
+        label: 'WorkHistory',
+        fieldName: 'Work_History__c',
+        type: 'lookupColumn',
+        typeAttributes: {
+            object: 'Scenario_AV__c',
+            fieldName: 'Work_History__c',
+            value: { fieldName: 'Work_History__c' },
+            context: { fieldName: 'Id' },
+            name: 'Work_History__c',
+            fields: ['NF_Work_History__c.Name'],
+            target: '_self'
+        },
+        editable: false,
+    },
     {
         label: 'Avant Skill Level', fieldName: 'Avant_Skill_Level__c', type: 'picklistColumn', editable: false, typeAttributes: {
             placeholder: 'Choose Type', options: { fieldName: 'pickListOptions' }, 
@@ -64,6 +79,7 @@ export default class SkillsAndScenarios extends LightningElement {
     lastSavedData = [];
     modelPopup = true;
     skillId = '';
+    @track contactData;
 
     @wire(getObjectInfo, { objectApiName: HCP_Scenario_OBJECT })
     objectInfo;
@@ -80,6 +96,7 @@ export default class SkillsAndScenarios extends LightningElement {
             console.log(error);
         }
     }
+
 
     renderedCallback(){
         let picklist = this.template.querySelector('.picklist-section')
@@ -163,7 +180,7 @@ export default class SkillsAndScenarios extends LightningElement {
                     'ScenarioCondition':ele.ScenarioCondition,
                     'Complication':ele.Complication,
                     'HCPSenarioId':ele.HCPScenarioId,
-                    'WorkHistory':ele.workHistroryName,
+                    'Work_History__c':'',
                     'Avant_Skill_Level__c':'',
                     'Scenario_Notes__c':'',
                     
@@ -192,7 +209,8 @@ export default class SkillsAndScenarios extends LightningElement {
                 Id:ele.Id,
                 AvantSkillLevel:ele.Avant_Skill_Level__c,
                 RecruitmentSkillsNotes:ele.Scenario_Notes__c,
-                SkillId:this.skillId
+                SkillId:this.skillId,
+                workHistroryId:ele.Work_History__c
             }
             return obj;
         })
@@ -269,12 +287,24 @@ export default class SkillsAndScenarios extends LightningElement {
         let dataRecieved = event.detail.data;
         let updatedItem = { Id: dataRecieved.context, Avant_Skill_Level__c: dataRecieved.value };
         console.log(updatedItem);
+            this.updateDraftValues(updatedItem);
+            this.updateDataValues(updatedItem);   
+    }
+
+    lookupChanged(event){
+        console.log('lookupChanged',event.detail.data);
+        event.stopPropagation();
+        let dataRecieved = event.detail.data;
+        let accountIdVal = dataRecieved.value != undefined ? dataRecieved.value : null;
+        let updatedItem = { Id: dataRecieved.context, Work_History__c: accountIdVal  };
+        console.log(updatedItem);
         this.updateDraftValues(updatedItem);
         this.updateDataValues(updatedItem);
     }
+
     updateDataValues(updateItem) {
         let copyData = JSON.parse(JSON.stringify(this.scenarious));
- 
+        console.log('copyData ',copyData);
         copyData.forEach(item => {
             if (item.Id === updateItem.Id) {
                 for (let field in updateItem) {
@@ -285,6 +315,7 @@ export default class SkillsAndScenarios extends LightningElement {
  
         //write changes back to original data
         this.scenarious = [...copyData];
+        console.log('Scenario ',this.scenarious);
     }
     handleChangeToggle(event){
         console.log('Checked ',event.target.checked);

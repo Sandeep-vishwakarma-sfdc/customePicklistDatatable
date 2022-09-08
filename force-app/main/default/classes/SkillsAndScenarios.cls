@@ -40,7 +40,7 @@ public with sharing class SkillsAndScenarios {
     public static List<SkillsAndScenarios.ScenarioWorkHistory> getScenarios(String specialityId){
        List<Scenario_AV__c> scenarios = [select Id,Name,Specialty_AV__c,Specialty_AV__r.Name,Work_History__c,Work_History__r.Name,Scenario_Condition_AV__c from Scenario_AV__c where Specialty_AV__c =:specialityId];
 
-       List<HCP_Scenario__c> hcpScenarios = [select Id,Name,Work_History__c,Work_History__r.Name,Skill__c,Scenario__c,Scenario_Condition__c,Scenario_Condition__r.Name,Complication__c from HCP_Scenario__c where Work_History__c!=null and Skill__c!=null];
+       List<HCP_Scenario__c> hcpScenarios = [select Id,Name,Work_History__c,Work_History__r.Name,Skill__c,Scenario__c,Scenario_Condition__c,Scenario_Condition__r.Name,Scenario_Complication__c from HCP_Scenario__c where Work_History__c!=null and Skill__c!=null];
        Map<String,HCP_Scenario__c> hcpScenarioMap = new Map<String,HCP_Scenario__c>();
        for(HCP_Scenario__c hcps: hcpScenarios){
             hcpScenarioMap.put(hcps.Scenario__c,hcps);
@@ -57,7 +57,7 @@ public with sharing class SkillsAndScenarios {
         swh.workHistroryId = hcpScenarioMap.get(s.Id)!=null?hcpScenarioMap.get(s.Id).Work_History__c:'';
         swh.workHistroryName = hcpScenarioMap.get(s.Id)!=null?hcpScenarioMap.get(s.Id).Work_History__r.Name:'';
         swh.ScenarioCondition = hcpScenarioMap.get(s.Id).Scenario_Condition__c!=null?hcpScenarioMap.get(s.Id).Scenario_Condition__r.Name:'';
-        swh.Complication = hcpScenarioMap.get(s.Id)!=null?hcpScenarioMap.get(s.Id).Complication__c:'';
+        swh.Complication = hcpScenarioMap.get(s.Id)!=null?hcpScenarioMap.get(s.Id).Scenario_Complication__c:'';
         swh.HCPScenarioId = hcpScenarioMap.get(s.Id)!=null?hcpScenarioMap.get(s.Id).Id:'';
         }
         ScenarioWorkHistories.add(swh);
@@ -66,7 +66,7 @@ public with sharing class SkillsAndScenarios {
        return ScenarioWorkHistories;
     }
     @AuraEnabled
-    public static List<ScenarioWrapper>  updateScenario(String scenario){
+    public static List<NF_HCP_Skill__c>  updateScenario(String scenario){
         List<ScenarioWrapper> scenarios = (List<ScenarioWrapper>)JSON.deserialize(scenario, List<ScenarioWrapper>.class);
         List<NF_HCP_Skill__c> hcpSkills = new List<NF_HCP_Skill__c>();
         List<HCP_Scenario__c> hcpScenaios = new List<HCP_Scenario__c>();
@@ -76,6 +76,7 @@ public with sharing class SkillsAndScenarios {
             hcpSkill.NF_Avant_Skill_Level__c = wrapper.AvantSkillLevel;
             hcpSkill.Recruitment_Skills_Notes__c = wrapper.RecruitmentSkillsNotes;
             hcpSkill.NF_Skill__c = wrapper.SkillId;
+            hcpSkill.Work_History__c = wrapper.workHistroryId;
             hcpSkills.add(hcpSkill);
             skillIds.add(wrapper.SkillId);
         }
@@ -100,7 +101,7 @@ public with sharing class SkillsAndScenarios {
             skill.isHCPScenarioQuery__c = true;
         }
         update skills;
-        return scenarios;
+        return hcpSkills;
     }
     
     @AuraEnabled
@@ -131,6 +132,7 @@ public with sharing class SkillsAndScenarios {
         @AuraEnabled public String AvantSkillLevel;
         @AuraEnabled public String RecruitmentSkillsNotes;
         @AuraEnabled public String SkillId;
+        @AuraEnabled public String workHistroryId;
 
     }
 
